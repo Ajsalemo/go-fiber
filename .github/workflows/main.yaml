@@ -56,6 +56,3 @@ jobs:
       - name: logout
         run: |
           az logout
-
-
-          az ad sp create-for-rbac --name "ansalemo-go-fiber" --role contributor --scopes /subscriptions/4388fa06-bf66-4497-82c2-991ba75ecb97/resourceGroups/ansalemo-rg/providers/Microsoft.Web/sites/ansalemo-go --sdk-auth
