@@ -1,0 +1,61 @@
+name: Go
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        # Change your go version as needed
+        go-version: 1.19
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Upload artifact for deployment jobs
+      uses: actions/upload-artifact@v2
+      with:
+        name: go-app
+        path: |
+          .
+          
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }} 
+      
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v2
+        with:
+          name: go-app
+          path: .
+
+      - uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v2
+        id: deploy-to-webapp
+        with:
+          app-name: 'ansalemo-go'
+          slot-name: 'Production'
+
+      - name: logout
+        run: |
+          az logout
+
+
+          az ad sp create-for-rbac --name "ansalemo-go-fiber" --role contributor --scopes /subscriptions/4388fa06-bf66-4497-82c2-991ba75ecb97/resourceGroups/ansalemo-rg/providers/Microsoft.Web/sites/ansalemo-go --sdk-auth
